@@ -1,0 +1,41 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mapa da Geometria na América Latina</title><style>:root{--background:#fff;--foreground:#182b3a;--muted:#e7eef1;--muted-foreground:#425b6a;--viz-series-1:#ca4b38;--viz-series-2:#42a8ae;--viz-series-3:#f0b960;--viz-series-4:#90b8d6;--font-size-base:15px}body{font-family:system-ui,sans-serif;color:var(--foreground);background:var(--background);max-width:850px;margin:2rem auto;padding:0 1rem}select{padding:.5rem;font:inherit}a{color:#135c7b}h3{font-size:1.5rem}#cbg-detail{padding:1rem;background:#eef6f7;border-radius:8px}</style></head><body><div id="mapa-cbg">
+  <h3>Geometria na América Latina</h3>
+  <div class="viz-controls"><label class="form-label">Área <select id="cbg-filter" class="form-select"><option value="">Todas</option><option>GDAG</option><option>GAC</option><option>GSC</option><option>TGV</option><option>GCDC</option><option>OGI</option></select></label></div>
+  <div id="cbg-map" role="img" aria-label="Mapa de centros de matemática selecionados na América Latina"></div>
+  <div id="cbg-detail" aria-live="polite">Selecione um centro para ver suas áreas e fonte.</div>
+  <div class="cbg-legend"><span>GDAG · Diferencial e análise</span><span>GAC · Algébrica e complexa</span><span>GSC · Simplética e contato</span><span>TGV · Topologia e variedades</span><span>GCDC · Convexa, discreta e computacional</span><span>OGI · Outras e interfaces</span></div>
+</div>
+<style>
+#mapa-cbg{display:grid;gap:12px}#cbg-map svg{display:block;width:100%;height:auto}#cbg-detail{min-height:3em}#mapa-cbg .cbg-legend{display:flex;gap:8px 16px;flex-wrap:wrap;color:var(--muted-foreground);font-size:var(--font-size-base)}#mapa-cbg .country{stroke:var(--background);stroke-width:1;fill:color-mix(in srgb,var(--viz-series-2) 22%,var(--background))}#mapa-cbg .country:nth-child(3n){fill:color-mix(in srgb,var(--viz-series-3) 22%,var(--background))}#mapa-cbg .country:nth-child(3n+1){fill:color-mix(in srgb,var(--viz-series-4) 22%,var(--background))}#mapa-cbg .dot{fill:var(--viz-series-1);stroke:var(--background);stroke-width:2}#mapa-cbg .point{cursor:pointer}
+</style>
+<script type="module">
+import {geoMercator,geoPath} from 'https://esm.sh/d3-geo@3.1.1';
+import {feature} from 'https://esm.sh/topojson-client@3.1.0';
+import world from 'https://esm.sh/@d3-maps/atlas@1.0.0/world/countries/countries-110m';
+const root=document.getElementById('mapa-cbg'), target=root.querySelector('#cbg-map'), detail=root.querySelector('#cbg-detail'), filter=root.querySelector('#cbg-filter');
+const items=[
+{n:'IMPA',c:'Rio de Janeiro',x:-43.17,y:-22.91,a:['GDAG','GSC'],u:'https://impa.br/temas-de-pesquisa/'},
+{n:'IME-USP',c:'São Paulo',x:-46.63,y:-23.55,a:['GDAG','GSC','TGV','OGI'],u:'https://www.ime.usp.br/pos-matematica/areas-pesquisa/'},
+{n:'ICMC-USP',c:'São Carlos',x:-47.89,y:-22.02,a:['GDAG','GSC','TGV'],u:'https://www.icmc.usp.br/pesquisa/grupos/?lab=90'},
+{n:'Unicamp',c:'Campinas',x:-47.06,y:-22.91,a:['GDAG','GAC'],u:'https://www.ime.unicamp.br/sites/default/files/inline/216/linhas_de_pesquisa_atualizadas-matematica.pdf'},
+{n:'UFMG',c:'Belo Horizonte',x:-43.94,y:-19.92,a:['GDAG','GAC','TGV'],u:'https://www.mat.ufmg.br/posgrad/pesquisa/'},
+{n:'UFC',c:'Fortaleza',x:-38.53,y:-3.73,a:['GDAG','TGV'],u:'https://pgmat.ufc.br/pt/areas-de-pesquisa/geometria-diferencial/'},
+{n:'UFPB',c:'João Pessoa',x:-34.86,y:-7.12,a:['GDAG','GAC','TGV'],u:'https://mat.ufpb.br/ppgmat/pt/paginas/areas-de-pesquisa'},
+{n:'UFPR',c:'Curitiba',x:-49.27,y:-25.43,a:['GDAG','GSC','TGV'],u:'https://ppgm.ufpr.br/geometria-e-topologia/'},
+{n:'FaMAF – UNC',c:'Córdoba',x:-64.19,y:-31.42,a:['GDAG','GSC'],u:'https://famaf.unc.edu.ar/investigaci%C3%B3n/%C3%A1reas-de-investigaci%C3%B3n/matem%C3%A1tica-ofi/differential-geometry/'},
+{n:'UBA',c:'Buenos Aires',x:-58.38,y:-34.60,a:['GDAG','GAC','TGV','OGI'],u:'https://web.dm.uba.ar/index.php/investigacion/grupos-de-investigacion/94-investigacion'},
+{n:'PUC Chile',c:'Santiago',x:-70.65,y:-33.45,a:['GDAG','GAC'],u:'https://www.mat.uc.cl/geometria.html?lang=en'},
+{n:'Udelar',c:'Montevidéu',x:-56.16,y:-34.90,a:['GDAG','GAC','OGI'],u:'https://www.cmat.edu.uy/investigacion'},
+{n:'PUCP',c:'Lima',x:-77.04,y:-12.05,a:['GDAG','GAC'],u:'https://departamento-ciencias.pucp.edu.pe/secciones/seccion-matematica/lineas-de-investigacion'},
+{n:'UNAL',c:'Bogotá',x:-74.08,y:4.71,a:['GDAG'],u:'https://ciencias.bogota.unal.edu.co/wp-content/uploads/PortafolioFC_revCamilo_Agosto2023.pdf'},
+{n:'CIMAT',c:'Guanajuato',x:-101.26,y:21.02,a:['GDAG','GAC','TGV'],u:'https://www.cimat.mx/iiinvestigacion/matematicas-basicas-maq/'},
+{n:'UNAM',c:'Cidade do México',x:-99.13,y:19.43,a:['GDAG','GCDC','TGV'],u:'https://www.matem.unam.mx/investigacion/lineas/topologia-geometria'},
+{n:'Cinvestav',c:'Cidade do México',x:-99.12,y:19.50,a:['GAC','GSC','TGV','GCDC'],u:'https://www.math.cinvestav.mx/index.php/investigadores'}
+];
+const countries=feature(world,world.objects.features).features;const ids=new Set(['MEX','GTM','BLZ','SLV','HND','NIC','CRI','PAN','CUB','DOM','HTI','JAM','COL','VEN','GUY','SUR','ECU','PER','BRA','BOL','PRY','URY','ARG','CHL']);const region={type:'FeatureCollection',features:countries.filter(f=>ids.has(f.properties.id))};
+const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 720 600');svg.setAttribute('aria-label','Centros selecionados de geometria');target.append(svg);const projection=geoMercator().fitExtent([[20,15],[700,580]],region),path=geoPath(projection);
+for(const f of region.features){let p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',path(f));p.setAttribute('class','country');svg.append(p)}
+function draw(){svg.querySelectorAll('.point').forEach(n=>n.remove());let selected=filter.value;for(const d of items){if(selected&&!d.a.includes(selected))continue;const pt=projection([d.x,d.y]);if(!pt)continue;let g=document.createElementNS(svg.namespaceURI,'g');g.setAttribute('class','point');g.setAttribute('role','button');g.setAttribute('tabindex','0');g.setAttribute('aria-label',`${d.n}, ${d.c}: ${d.a.join(', ')}`);let circle=document.createElementNS(svg.namespaceURI,'circle');circle.setAttribute('cx',pt[0]);circle.setAttribute('cy',pt[1]);circle.setAttribute('r','7');circle.setAttribute('class','dot');g.append(circle);const activate=()=>{detail.replaceChildren();let b=document.createElement('strong');b.textContent=d.n+' · '+d.c;let text=document.createTextNode(' — '+d.a.join(' · ')+'  ');let link=document.createElement('a');link.href=d.u;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Fonte';detail.append(b,text,link)};g.addEventListener('click',activate);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();activate()}});svg.append(g)}}
+filter.addEventListener('change',()=>{detail.textContent='Selecione um centro para ver suas áreas e fonte.';draw()});draw();
+</script>
+</body></html>
